@@ -25,6 +25,7 @@ RUN	apk del build-base curl wget unzip tzdata openssl && \
 
 COPY index.html /opt/novnc/index.html
 COPY config /config
+RUN mkdir -p /root/.config/tigervnc
 
 ENV VNC_TITLE="Home Assistant Dashboard" \
 #Local Display Server Port

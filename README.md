@@ -1,7 +1,5 @@
 ## Home Assistant Dashboard through VNC
 
-**Security**: This is will expose a unauthenticated VNC view on your network. Anyone on the network can access it without authentication and interact with your home assistant. Use this only on trusted networks.
-
 _Note_: This is a pre-release, it mostly works on my iPad2, most of the time, but unless you want to fiddle I'd wait a bit.
 
 
