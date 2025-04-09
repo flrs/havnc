@@ -1,6 +1,8 @@
 ## Home Assistant Dashboard through VNC
 
-_Warning_: This is a pre-release, it mostly works on my iPad2, most of the time, but unless you want to fiddle I'd wait a bit.
+**Security**: This is will expose a unauthenticated VNC view on your network. Anyone on the network can access it without authentication and interact with your home assistant. Use this only on trusted networks.
+
+_Note_: This is a pre-release, it mostly works on my iPad2, most of the time, but unless you want to fiddle I'd wait a bit.
 
 
 Simple add-on which allows you to view and interact with a dashboard (or any other webpage) through a modern chromium instance inside a noVNC webpage.
