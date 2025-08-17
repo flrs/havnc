@@ -2,6 +2,8 @@
 
 _Note_: This is a pre-release, it mostly works on my iPad2, most of the time, but unless you want to fiddle I'd wait a bit.
 
+_Note_: This fork has been optimized for retina display usage. Set `2048x1536` in the configuration to display on a retina device with `1024x768` native (non-retina) resolution.
+
 
 Simple add-on which allows you to view and interact with a dashboard (or any other webpage) through a modern chromium instance inside a noVNC webpage.
 

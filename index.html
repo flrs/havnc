@@ -41,6 +41,28 @@
         src='http://getfirebug.com/releases/lite/1.2/firebug-lite-compressed.js'></script>
     -->
         <script src="include/util.js"></script>
+
+    <style>
+      html, body { height: 100%; margin: 0; padding: 0; }
+      #noVNC_screen {
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+        background: #000;
+      }
+      #noVNC_status_bar { flex: 0 0 auto; }
+      #noVNC_canvas {
+        flex: 1 1 auto;
+        width: 100%;
+        display: block;
+        image-rendering: crisp-edges;
+        image-rendering: -webkit-optimize-contrast;
+        image-rendering: pixelated;
+        touch-action: none;
+      }
+      body { overscroll-behavior: contain; }
+    </style>
+
 </head>
 
 <body style="margin: 0px;">
@@ -64,7 +86,7 @@
                             </div></td>
                 </tr></table>
             </div>
-            <canvas id="noVNC_canvas" width="640px" height="20px">
+            <canvas id="noVNC_canvas">
                 Canvas not supported.
             </canvas>
         </div>
@@ -79,7 +101,67 @@
                            "keysymdef.js", "keyboard.js", "input.js", "display.js",
                            "jsunzip.js", "rfb.js", "keysym.js"]);
 
+        // --- Fix pointer mapping on HiDPI / iPad (noVNC) ---
+        (function () {
+          if (!window.Util) return;
+
+          // Keep a handle in case you want to compare behavior:
+          const _old = Util.getEventPosition;
+
+          // noVNC historically calls: Util.getEventPosition(e, target, scale)
+          Util.getEventPosition = function (e, target, scale) {
+            // 1) Get client coords from either mouse or touch
+            let cx, cy;
+            if (e.touches && e.touches.length) {
+              cx = e.touches[0].clientX; cy = e.touches[0].clientY;
+            } else if (e.changedTouches && e.changedTouches.length) {
+              cx = e.changedTouches[0].clientX; cy = e.changedTouches[0].clientY;
+            } else {
+              cx = e.clientX; cy = e.clientY;
+            }
+
+            // 2) Relative to the element in CSS pixels
+            const rect = target.getBoundingClientRect();
+            let x = cx - rect.left;
+            let y = cy - rect.top;
+
+            // 3) Map CSS px → canvas backing-store px (accounts for devicePixelRatio)
+            //    target.width/height are backing-store (physical) pixels
+            const sx = target.width  / rect.width;
+            const sy = target.height / rect.height;
+            x *= sx; y *= sy;
+
+            // 4) Compensate for noVNC's own viewport scaling (fit-to-window)
+            //    "scale" is passed in by noVNC; divide to get framebuffer coords
+            if (typeof scale === 'number' && scale) {
+              x /= scale; y /= scale;
+            }
+
+            // 5) Return integer coords as noVNC expects
+            x = Math.max(0, Math.round(x));
+            y = Math.max(0, Math.round(y));
+            return { x, y };
+          };
+        })();
+
         var rfb;
+
+        // --- HiDPI (Retina) canvas sizing helper ---
+        function fixHiDPICanvas() {
+            var canvas = $D('noVNC_canvas');
+            if (!canvas) return;
+            var rect = canvas.getBoundingClientRect();
+            var cssW = Math.max(1, Math.floor(rect.width));
+            var cssH = Math.max(1, Math.floor(rect.height));
+            var dpr = window.devicePixelRatio || 1;
+            var needW = Math.max(1, Math.floor(cssW * dpr));
+            var needH = Math.max(1, Math.floor(cssH * dpr));
+            if (canvas.width !== needW) canvas.width = needW;
+            if (canvas.height !== needH) canvas.height = needH;
+        }
+        window.addEventListener('resize', fixHiDPICanvas, { passive: true });
+        window.addEventListener('orientationchange', function(){ setTimeout(fixHiDPICanvas, 250); }, { passive: true });
+
 
         function passwordRequired(rfb) {
             var msg;
@@ -203,7 +285,10 @@
                            'onUpdateState':  updateState,
                            'onXvpInit':    xvpInit,
                            'onPasswordRequired':  passwordRequired});
+            fixHiDPICanvas();
+            try { rfb.scaleViewport = true; rfb.clipViewport = true; } catch (e) {}
             rfb.connect(host, port, password, path);
+            setTimeout(fixHiDPICanvas, 200);
         };
         </script>
 
